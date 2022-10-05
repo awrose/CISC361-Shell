@@ -11,6 +11,8 @@
 #include <signal.h>
 #include "sh.h"
 
+#define BUFFERSIZE 128
+
 int sh( int argc, char **argv, char **envp )
 {
   char *prompt = calloc(PROMPTMAX, sizeof(char));
@@ -39,11 +41,29 @@ int sh( int argc, char **argv, char **envp )
   /* Put PATH into a linked list */
   pathlist = get_path();
 
+  char buffer[BUFFERSIZE];
+  int len;
+	
+
   while ( go )
   {
-    /* print your prompt */
+	//prompt
+	printf("\n [%s]>\n", owd);
+	printf("Enter a command: \n");	
 
-    /* get command line and process */
+	//get command line
+	setbuf(stdin, NULL);
+	if(fgets(buffer, BUFFERSIZE, stdin)!=NULL){
+		len = (int)strlen(buffer);
+		buffer[len-1] = '\0';
+		strcpy(commandline, buffer);
+	}
+
+	command = strtok(commandline, " ");
+	
+	printf("%s\n", command);
+
+	
 
     /* check for each built in command and implement */
 
