@@ -59,13 +59,44 @@ int sh( int argc, char **argv, char **envp )
 		strcpy(commandline, buffer);
 	}
 
-	command = strtok(commandline, " ");
+	//command = strtok(commandline, " ");
 	
-	printf("%s\n", command);
-
-	
+	arg = strtok(commandline, " ");	
+	command = commandline;
+	arg = strtok(NULL, " ");
 
     /* check for each built in command and implement */
+	if(strcmp(command, "exit") == 0){
+		//free all allocated memory
+		go = 0;
+	}else if(strcmp(command, "pwd")==0){
+		printf("Printing Working Directory....\n");
+		pwd = getcwd(NULL, 0);
+		printf("%s\n", pwd);
+		free(pwd);
+		//printf("Printing Working Directory.....\n%s\n", owd);
+	}else if(strcmp(command, "pid")==0){
+		int pid = getpid();
+		printf("Printing pid.....\n%d\n", pid);
+	}else if(strcmp(command, "which") == 0){
+		//which
+	}else if(strcmp(command, "where") == 0){
+		//where
+	}else if(strcmp(command, "cd") == 0){
+		//cd
+	}else if(strcmp(command, "list") == 0){
+		//list
+	}else if(strcmp(command, "kill") == 0){
+		//kill
+	}else if(strcmp(command, "prompt") == 0){
+		//prompt
+	}else if(strcmp(command, "printenv") == 0){
+		//printenv
+	}else if(strcmp(command, "setenv") == 0){
+		//setenv
+	}
+		
+
 
      /*  else  program to exec */
     {
