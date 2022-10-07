@@ -1,14 +1,3 @@
-#include <stdio.h>
-#include <string.h>
-#include <strings.h>
-#include <limits.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <pwd.h>
-#include <dirent.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <signal.h>
 #include "sh.h"
 
 #define BUFFERSIZE 128
@@ -17,8 +6,8 @@ int sh( int argc, char **argv, char **envp )
 {
   char *prompt = calloc(PROMPTMAX, sizeof(char));
   char *commandline = calloc(MAX_CANON, sizeof(char));
-  char *command, *arg, *commandpath, *p, *pwd, *owd;
-  char **args = calloc(MAXARGS, sizeof(char*));
+  char *command, *arg, *token, *commandpath, *p, *pwd, *owd;
+  char **args;
   int uid, i, status, argsct, go = 1;
   struct passwd *password_entry;
   char *homedir;
@@ -48,8 +37,7 @@ int sh( int argc, char **argv, char **envp )
   while ( go )
   {
 	//prompt
-	printf("\n [%s]>\n", owd);
-	printf("Enter a command: \n");	
+	printf("%s [%s]>", prompt, pwd);
 
 	//get command line
 	setbuf(stdin, NULL);
@@ -59,45 +47,69 @@ int sh( int argc, char **argv, char **envp )
 		strcpy(commandline, buffer);
 	}
 
-	//command = strtok(commandline, " ");
-	
-	arg = strtok(commandline, " ");	
-	command = commandline;
-	arg = strtok(NULL, " ");
+  char *token = strtok(commandline, " ");
 
+  //find the length
+  int count = 0; 
+  while(token != NULL){
+    count++;
+    token = strtok(NULL, " ");
+  }
+
+  args = malloc((count+1) *sizeof(char*));
+  args[count]=0;
+
+  strcpy(commandline, buffer);
+  count = 0; 
+  token = strtok(buffer, " ");
+  while(token != NULL){
+    args[count] = (char*)malloc((strlen(token)+1) *sizeof(char*));
+    strcpy(args[count], token);
+    count++;
+    token = strtok(NULL, " ");
+  }
+  argsct = count;
+
+  if(argsct > 0){
+    if(strcmp(args[0], "exit") == 0){
+      printf("Exiting Program.....\n");
+      go = 0; 
+
+      free(args[0]);
+      free(args);
+      free(owd);
+      free(pwd);
+    }else if(strcmp(args[0], "pwd") == 0){
+      printf("Printing pwd......\n");
+      printf("[%s]\n", pwd);
+
+      free(args[0]);
+      free(args);
+    }else if(strcmp(args[0], "pid") == 0){
+      printf("Printing pid....\n");
+      printf("%d\n", getpid());
+
+      free(args[0]);
+      free(args);
+    }else if(strcmp(args[0], "where") == 0){
+
+    }else if(strcmp(args[0], "which") == 0){
+
+    }else if(strcmp(args[0], "cd") == 0){
+
+    }else if(strcmp(args[0], "list") == 0){
+
+    }else if(strcmp(args[0], "kill") == 0){
+
+    }else if(strcmp(args[0], "prompt") == 0){
+
+    }else if(strcmp(args[0], "printev") == 0){
+
+    }else if(strcmp(args[0], "setenv") == 0){
+
+    }
+  }
     /* check for each built in command and implement */
-	if(strcmp(command, "exit") == 0){
-		//free all allocated memory
-		go = 0;
-	}else if(strcmp(command, "pwd")==0){
-		printf("Printing Working Directory....\n");
-		pwd = getcwd(NULL, 0);
-		printf("%s\n", pwd);
-		free(pwd);
-		//printf("Printing Working Directory.....\n%s\n", owd);
-	}else if(strcmp(command, "pid")==0){
-		int pid = getpid();
-		printf("Printing pid.....\n%d\n", pid);
-	}else if(strcmp(command, "which") == 0){
-		//which
-	}else if(strcmp(command, "where") == 0){
-		//where
-	}else if(strcmp(command, "cd") == 0){
-		//cd
-	}else if(strcmp(command, "list") == 0){
-		//list
-	}else if(strcmp(command, "kill") == 0){
-		//kill
-	}else if(strcmp(command, "prompt") == 0){
-		//prompt
-	}else if(strcmp(command, "printenv") == 0){
-		//printenv
-	}else if(strcmp(command, "setenv") == 0){
-		//setenv
-	}
-		
-
-
      /*  else  program to exec */
     {
        /* find it */
@@ -127,4 +139,3 @@ void list ( char *dir )
   /* see man page for opendir() and readdir() and print out filenames for
   the directory passed */
 } /* list() */
-
