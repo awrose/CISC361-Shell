@@ -96,7 +96,40 @@ int sh( int argc, char **argv, char **envp )
     }else if(strcmp(args[0], "which") == 0){
 
     }else if(strcmp(args[0], "cd") == 0){
+      if(argsct == 1){
+        //cd to homedirectory 
+        chdir(homedir);
 
+          if ( (pwd = getcwd(NULL, PATH_MAX+1)) == NULL )
+          {
+            perror("getcwd");
+            exit(2);
+          }
+          owd = calloc(strlen(pwd) + 1, sizeof(char));
+          memcpy(owd, pwd, strlen(pwd));
+      }else if(args[1][0] == '-'){
+        //go to the previous directory'
+        
+        chdir("..");
+
+          if ( (pwd = getcwd(NULL, PATH_MAX+1)) == NULL )
+          {
+            perror("getcwd");
+            exit(2);
+          }
+          owd = calloc(strlen(pwd) + 1, sizeof(char));
+          memcpy(owd, pwd, strlen(pwd));
+      }else{
+        //go to the specified directory
+        chdir(args[1]);
+            if ( (pwd = getcwd(NULL, PATH_MAX+1)) == NULL )
+          {
+            perror("getcwd");
+            exit(2);
+          }
+          owd = calloc(strlen(pwd) + 1, sizeof(char));
+          memcpy(owd, pwd, strlen(pwd));
+      }
     }else if(strcmp(args[0], "list") == 0){
 
     }else if(strcmp(args[0], "kill") == 0){
