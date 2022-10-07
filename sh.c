@@ -109,7 +109,7 @@ int sh( int argc, char **argv, char **envp )
           memcpy(owd, pwd, strlen(pwd));
       }else if(args[1][0] == '-'){
         //go to the previous directory'
-        
+
         chdir("..");
 
           if ( (pwd = getcwd(NULL, PATH_MAX+1)) == NULL )
@@ -135,6 +135,17 @@ int sh( int argc, char **argv, char **envp )
     }else if(strcmp(args[0], "kill") == 0){
 
     }else if(strcmp(args[0], "prompt") == 0){
+      if(argsct == 1){
+        //prompt for a new string
+        printf("please input a prompt\n");
+        	if(fgets(buffer, BUFFERSIZE, stdin)!=NULL){
+		        len = (int)strlen(buffer);
+		        buffer[len-1] = '\0';
+		        strcpy(prompt, buffer);
+	        }
+      }else{ 
+        prompt = args[1];
+      }
 
     }else if(strcmp(args[0], "printev") == 0){
 
