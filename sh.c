@@ -2,6 +2,8 @@
 
 #define BUFFERSIZE 128
 
+extern char **environ;
+
 int sh( int argc, char **argv, char **envp )
 {
   char *prompt = calloc(PROMPTMAX, sizeof(char));
@@ -71,6 +73,7 @@ int sh( int argc, char **argv, char **envp )
   argsct = count;
 
   if(argsct > 0){
+        /* check for each built in command and implement */
     if(strcmp(args[0], "exit") == 0){
       printf("Exiting Program.....\n");
       go = 0; 
@@ -92,8 +95,10 @@ int sh( int argc, char **argv, char **envp )
       free(args[0]);
       free(args);
     }else if(strcmp(args[0], "where") == 0){
+      where(args[1], pathlist);
 
     }else if(strcmp(args[0], "which") == 0){
+      which(args[1], pathlist);
 
     }else if(strcmp(args[0], "cd") == 0){
       if(argsct == 1){
@@ -131,8 +136,33 @@ int sh( int argc, char **argv, char **envp )
           memcpy(owd, pwd, strlen(pwd));
       }
     }else if(strcmp(args[0], "list") == 0){
+      if(argsct == 1){
+        list(owd);
+      }else{
+        for(int i = 1; i<argsct; i++){
+          printf("\n%s:", pwd);
+          list(args[i]);
+        }
+      }
 
     }else if(strcmp(args[0], "kill") == 0){
+      if(argsct == 2){
+        //kill
+        pid_t killpid = atoi(args[1]);
+        kill(killpid, SIGTERM);
+        free(args[1]);
+        free(args[0]);
+        free(args);
+      }else if(argsct == 3){
+        pid_t killpid = atoi(args[2]);
+        int signal = -1 * atoi(args[1]);
+
+        kill(killpid, signal);
+        free(args[2]);
+        free(args[1]);
+        free(args[0]);
+        free(args);
+      }
 
     }else if(strcmp(args[0], "prompt") == 0){
       if(argsct == 1){
@@ -147,39 +177,106 @@ int sh( int argc, char **argv, char **envp )
         prompt = args[1];
       }
 
-    }else if(strcmp(args[0], "printev") == 0){
+    }else if(strcmp(args[0], "printenv") == 0){
+      char **s = environ;
+
+      if(argsct == 1){
+        while(*s){
+          printf("%s\n", *s++);
+        }
+      }else if(argsct == 2){
+        printf("%s\n", getenv(args[1]));
+      }else{
+        //add right error message
+        printf("Error: too many args\n");
+
+      }
 
     }else if(strcmp(args[0], "setenv") == 0){
+      char **s = environ; 
+
+      //PATH: update linked list for the path directories (free() the old one)
+      //HOME: cd with no arguments should now go to the new home
+
+      if(argsct == 1){
+        while(*s){
+          printf("%s\n", *s++);
+        }
+      }else if(argsct == 2){
+        //set that as an empty environment variable
+      }else if(argsct == 3){
+        //second one is the value of the first
+      }else{
+        //add right error message
+        printf("Error: too many args\n");
+      }
 
     }
   }
-    /* check for each built in command and implement */
      /*  else  program to exec */
-    {
        /* find it */
        /* do fork(), execve() and waitpid() */
 
       /* else */
         /* fprintf(stderr, "%s: Command not found.\n", args[0]); */
-    }
   }
   return 0;
 } /* sh() */
 
-char *which(char *command, struct pathelement *pathlist )
+void which(char *command, struct pathelement *pathlist )
 {
    /* loop through pathlist until finding command and return it.  Return
    NULL when not found. */
+   struct pathelement *tmp = pathlist;
+
+   while(tmp){
+      if(tmp->element == command){
+        printf("%s\n", command);
+        break;
+      }
+
+      tmp = tmp->next;
+
+   }
 
 } /* which() */
 
-char *where(char *command, struct pathelement *pathlist )
+void where(char *command, struct pathelement *pathlist )
 {
   /* similarly loop through finding all locations of command */
+  struct pathelement *tmp = pathlist;
+  while(tmp){
+    if(tmp->element == command){
+      printf("%s\n", command);
+    }
+    tmp = tmp->next;
+  }
 } /* where() */
 
-void list ( char *dir )
+
+void list ( char *currDir )
 {
   /* see man page for opendir() and readdir() and print out filenames for
   the directory passed */
+  DIR* dir = opendir(currDir);
+  if(!dir){
+    perror("opendir");
+    exit(EXIT_FAILURE);
+  }
+  struct dirent* dr;
+  while((dr = readdir(dir))){
+    //printf("READING FILES\n");
+    printf("%s\n", dr->d_name);
+  }
+  closedir(dir);
 } /* list() */
+
+void freeArgs(char *args, int argsct){
+  for(int i = 0; i<argsct; i++){
+    free(args[i]);
+  }
+
+  free(args);
+
+} /* freeArgs()*/
+
