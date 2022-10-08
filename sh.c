@@ -34,8 +34,6 @@ int sh( int argc, char **argv, char **envp )
 
   char buffer[BUFFERSIZE];
   int len;
-	
-
   while ( go )
   {
 	//prompt
@@ -49,7 +47,7 @@ int sh( int argc, char **argv, char **envp )
 		strcpy(commandline, buffer);
 	}
 
-  char *token = strtok(commandline, " ");
+  token = strtok(commandline, " ");
 
   //find the length
   int count = 0; 
@@ -78,31 +76,36 @@ int sh( int argc, char **argv, char **envp )
       printf("Exiting Program.....\n");
       go = 0; 
 
-      free(args[0]);
-      free(args);
       free(owd);
       free(pwd);
     }else if(strcmp(args[0], "pwd") == 0){
       printf("Printing pwd......\n");
       printf("[%s]\n", pwd);
 
-      free(args[0]);
-      free(args);
     }else if(strcmp(args[0], "pid") == 0){
       printf("Printing pid....\n");
       printf("%d\n", getpid());
 
-      free(args[0]);
-      free(args);
     }else if(strcmp(args[0], "where") == 0){
-      where(args[1], pathlist);
+      if(argsct == 1){
+        printf("Too little args\n");
+      }else if(argsct == 2){
+        where(args[1], pathlist);
+      }else{
+        printf("too many arguments");
+      }
 
     }else if(strcmp(args[0], "which") == 0){
-      which(args[1], pathlist);
+      if(argsct == 1){
+        printf("Too little args\n");
+      }else if(argsct == 2){
+        which(args[1], pathlist);
+      }else{
+        printf("too many arguments");
+      }
 
     }else if(strcmp(args[0], "cd") == 0){
       if(argsct == 1){
-        //cd to homedirectory 
         chdir(homedir);
 
           if ( (pwd = getcwd(NULL, PATH_MAX+1)) == NULL )
@@ -211,6 +214,10 @@ int sh( int argc, char **argv, char **envp )
         printf("Error: too many args\n");
       }
 
+    }else if(access(args[0], X_OK) == 0){
+      //execute it
+      //printf("found command");
+      execve(args[0], args, environ);
     }
   }
      /*  else  program to exec */
@@ -230,13 +237,11 @@ void which(char *command, struct pathelement *pathlist )
    struct pathelement *tmp = pathlist;
 
    while(tmp){
-      if(tmp->element == command){
-        printf("%s\n", command);
-        break;
-      }
-
-      tmp = tmp->next;
-
+    if(strstr(tmp->element, command)){
+      printf("%s\n", tmp->element);
+      break; 
+    }
+    tmp = tmp->next;
    }
 
 } /* which() */
@@ -244,12 +249,11 @@ void which(char *command, struct pathelement *pathlist )
 void where(char *command, struct pathelement *pathlist )
 {
   /* similarly loop through finding all locations of command */
-  struct pathelement *tmp = pathlist;
-  while(tmp){
-    if(tmp->element == command){
-      printf("%s\n", command);
+  while(pathlist){
+    if(strstr(pathlist->element, command)){
+      printf("%s\n", pathlist->element);
     }
-    tmp = tmp->next;
+    pathlist = pathlist->next;
   }
 } /* where() */
 
@@ -270,13 +274,3 @@ void list ( char *currDir )
   }
   closedir(dir);
 } /* list() */
-
-void freeArgs(char *args, int argsct){
-  for(int i = 0; i<argsct; i++){
-    free(args[i]);
-  }
-
-  free(args);
-
-} /* freeArgs()*/
-
