@@ -71,7 +71,6 @@ int sh( int argc, char **argv, char **envp )
   argsct = count;
 
   if(argsct > 0){
-        /* check for each built in command and implement */
     if(strcmp(args[0], "exit") == 0){
       printf("Exiting Program.....\n");
       go = 0; 
@@ -116,7 +115,6 @@ int sh( int argc, char **argv, char **envp )
           owd = calloc(strlen(pwd) + 1, sizeof(char));
           memcpy(owd, pwd, strlen(pwd));
       }else if(args[1][0] == '-'){
-        //go to the previous directory'
 
         chdir("..");
 
@@ -128,7 +126,6 @@ int sh( int argc, char **argv, char **envp )
           owd = calloc(strlen(pwd) + 1, sizeof(char));
           memcpy(owd, pwd, strlen(pwd));
       }else{
-        //go to the specified directory
         chdir(args[1]);
             if ( (pwd = getcwd(NULL, PATH_MAX+1)) == NULL )
           {
@@ -150,7 +147,6 @@ int sh( int argc, char **argv, char **envp )
 
     }else if(strcmp(args[0], "kill") == 0){
       if(argsct == 2){
-        //kill
         pid_t killpid = atoi(args[1]);
         kill(killpid, SIGTERM);
         free(args[1]);
@@ -169,7 +165,6 @@ int sh( int argc, char **argv, char **envp )
 
     }else if(strcmp(args[0], "prompt") == 0){
       if(argsct == 1){
-        //prompt for a new string
         printf("please input a prompt\n");
         	if(fgets(buffer, BUFFERSIZE, stdin)!=NULL){
 		        len = (int)strlen(buffer);
@@ -215,25 +210,43 @@ int sh( int argc, char **argv, char **envp )
       }
 
     }else if(access(args[0], X_OK) == 0){
-      //execute it
-      //printf("found command");
-      execve(args[0], args, environ);
+      pid_t pid1 = fork();
+      if(pid1 == 0){
+        execve(args[0], args, environ);
+      }else{
+        waitpid(pid1, NULL, 0);
+      }
+    }else{
+      while(pathlist){
+        if(strstr(pathlist->element, args[0])){
+          char *newPathlist = strtok(pathlist, "/");
+
+          while(newPathlist){
+            if(access(newPathlist, X_OK) == 0){
+              pid_t pid2 = fork();
+              if(pid2 == 0){
+                execve(newPathlist, args, environ);
+              }else{
+                waitpid(pid2, NULL, 0);
+              }
+              break;
+            }
+            newPathlist = strtok(NULL, "/");
+          }
+        }
+
+        pathlist = pathlist->next;
+      }
+
+      printf("[%s]Command Not Found\n", args[0]);
     }
   }
-     /*  else  program to exec */
-       /* find it */
-       /* do fork(), execve() and waitpid() */
-
-      /* else */
-        /* fprintf(stderr, "%s: Command not found.\n", args[0]); */
   }
   return 0;
 } /* sh() */
 
 void which(char *command, struct pathelement *pathlist )
 {
-   /* loop through pathlist until finding command and return it.  Return
-   NULL when not found. */
    struct pathelement *tmp = pathlist;
 
    while(tmp){
@@ -244,24 +257,21 @@ void which(char *command, struct pathelement *pathlist )
     tmp = tmp->next;
    }
 
-} /* which() */
+}
 
 void where(char *command, struct pathelement *pathlist )
 {
-  /* similarly loop through finding all locations of command */
   while(pathlist){
     if(strstr(pathlist->element, command)){
       printf("%s\n", pathlist->element);
     }
     pathlist = pathlist->next;
   }
-} /* where() */
+}
 
 
 void list ( char *currDir )
 {
-  /* see man page for opendir() and readdir() and print out filenames for
-  the directory passed */
   DIR* dir = opendir(currDir);
   if(!dir){
     perror("opendir");
@@ -269,8 +279,7 @@ void list ( char *currDir )
   }
   struct dirent* dr;
   while((dr = readdir(dir))){
-    //printf("READING FILES\n");
     printf("%s\n", dr->d_name);
   }
   closedir(dir);
-} /* list() */
+}
