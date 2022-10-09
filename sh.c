@@ -72,39 +72,52 @@ int sh( int argc, char **argv, char **envp )
 
   if(argsct > 0){
     if(strcmp(args[0], "exit") == 0){
-      printf("Exiting Program.....\n");
+      printf("Executing built-in [exit]\n");
       go = 0; 
 
+      //free(args);
+      //freeArgs();
       free(owd);
       free(pwd);
     }else if(strcmp(args[0], "pwd") == 0){
-      printf("Printing pwd......\n");
+      printf("Executing built-in [pwd]\n");
       printf("[%s]\n", pwd);
 
+      //free(args);
+
     }else if(strcmp(args[0], "pid") == 0){
-      printf("Printing pid....\n");
+      printf("Executing built-in [pid]\n");
       printf("%d\n", getpid());
+
+      //free(args);
 
     }else if(strcmp(args[0], "where") == 0){
       if(argsct == 1){
         printf("Too little args\n");
       }else if(argsct == 2){
+        printf("Executing built-in [where]\n");
         where(args[1], pathlist);
       }else{
-        printf("too many arguments");
+        printf("too many arguments\n");
       }
+
+      //free(args);
 
     }else if(strcmp(args[0], "which") == 0){
       if(argsct == 1){
         printf("Too little args\n");
       }else if(argsct == 2){
+        printf("Executing built-in [which]\n");
         which(args[1], pathlist);
       }else{
-        printf("too many arguments");
+        printf("too many arguments\n");
       }
+
+      //free(args);
 
     }else if(strcmp(args[0], "cd") == 0){
       if(argsct == 1){
+        printf("Executing built-in [cd]\n");
         chdir(homedir);
 
           if ( (pwd = getcwd(NULL, PATH_MAX+1)) == NULL )
@@ -112,9 +125,10 @@ int sh( int argc, char **argv, char **envp )
             perror("getcwd");
             exit(2);
           }
-          owd = calloc(strlen(pwd) + 1, sizeof(char));
-          memcpy(owd, pwd, strlen(pwd));
+            owd = calloc(strlen(pwd) + 1, sizeof(char));
+            memcpy(owd, pwd, strlen(pwd));
       }else if(args[1][0] == '-'){
+        printf("Executing built-in [cd]\n");
 
         chdir("..");
 
@@ -123,47 +137,49 @@ int sh( int argc, char **argv, char **envp )
             perror("getcwd");
             exit(2);
           }
-          owd = calloc(strlen(pwd) + 1, sizeof(char));
-          memcpy(owd, pwd, strlen(pwd));
+
+            owd = calloc(strlen(pwd) + 1, sizeof(char));
+            memcpy(owd, pwd, strlen(pwd));
       }else{
+        printf("Executing built-in [cd]\n");
         chdir(args[1]);
             if ( (pwd = getcwd(NULL, PATH_MAX+1)) == NULL )
           {
             perror("getcwd");
             exit(2);
           }
-          owd = calloc(strlen(pwd) + 1, sizeof(char));
-          memcpy(owd, pwd, strlen(pwd));
+
+            owd = calloc(strlen(pwd) + 1, sizeof(char));
+            memcpy(owd, pwd, strlen(pwd));
       }
+
     }else if(strcmp(args[0], "list") == 0){
+      printf("Executing built-in [list]\n");
       if(argsct == 1){
         list(owd);
       }else{
         for(int i = 1; i<argsct; i++){
-          printf("\n%s:", pwd);
+          printf("\n%s:", args[i]);
           list(args[i]);
         }
       }
 
     }else if(strcmp(args[0], "kill") == 0){
+      printf("Executing built-in [kill]\n");
       if(argsct == 2){
         pid_t killpid = atoi(args[1]);
         kill(killpid, SIGTERM);
-        free(args[1]);
-        free(args[0]);
-        free(args);
+
       }else if(argsct == 3){
         pid_t killpid = atoi(args[2]);
         int signal = -1 * atoi(args[1]);
 
         kill(killpid, signal);
-        free(args[2]);
-        free(args[1]);
-        free(args[0]);
-        free(args);
       }
 
+
     }else if(strcmp(args[0], "prompt") == 0){
+      printf("Executing built-in [prompt]\n");
       if(argsct == 1){
         printf("please input a prompt\n");
         	if(fgets(buffer, BUFFERSIZE, stdin)!=NULL){
@@ -179,16 +195,19 @@ int sh( int argc, char **argv, char **envp )
       char **s = environ;
 
       if(argsct == 1){
+        printf("Executing built-in [printenv]\n");
         while(*s){
           printf("%s\n", *s++);
         }
       }else if(argsct == 2){
+        printf("Executing built-in [printenv]\n");
         printf("%s\n", getenv(args[1]));
       }else{
         //add right error message
         printf("Error: too many args\n");
 
       }
+
 
     }else if(strcmp(args[0], "setenv") == 0){
       char **s = environ; 
@@ -197,21 +216,41 @@ int sh( int argc, char **argv, char **envp )
       //HOME: cd with no arguments should now go to the new home
 
       if(argsct == 1){
+        printf("Executing built-in [printenv]\n");
         while(*s){
           printf("%s\n", *s++);
         }
       }else if(argsct == 2){
-        //set that as an empty environment variable
+        printf("Executing built-in [printenv]\n");
+        setenv(args[1], "/", 1);
+        if(strcmp(args[1], "HOME") == 0){
+          homedir = getenv("HOME");
+        }else if(strcmp(args[1], "PATH") == 0){
+          free(pathlist->element);
+          //free the pathlist
+          pathlist = get_path();
+        }
       }else if(argsct == 3){
-        //second one is the value of the first
+        printf("Executing built-in [printenv]\n");
+        setenv(args[1], args[2], 1);
+
+        if(strcmp(args[1], "HOME") == 0){
+          homedir = getenv("HOME");
+        }else if(strcmp(args[1], "PATH") == 0){
+          //freepathlist
+          pathlist = get_path();
+        }
       }else{
         //add right error message
         printf("Error: too many args\n");
       }
 
+      //freeargs
+
     }else if(access(args[0], X_OK) == 0){
       pid_t pid1 = fork();
       if(pid1 == 0){
+        printf("Executing [%s]\n", args[0]);
         execve(args[0], args, environ);
       }else{
         waitpid(pid1, NULL, 0);
@@ -225,6 +264,7 @@ int sh( int argc, char **argv, char **envp )
             if(access(newPathlist, X_OK) == 0){
               pid_t pid2 = fork();
               if(pid2 == 0){
+                printf("Executing [%s]\n", newPathlist);
                 execve(newPathlist, args, environ);
               }else{
                 waitpid(pid2, NULL, 0);
@@ -234,11 +274,10 @@ int sh( int argc, char **argv, char **envp )
             newPathlist = strtok(NULL, "/");
           }
         }
-
         pathlist = pathlist->next;
       }
 
-      printf("[%s]Command Not Found\n", args[0]);
+      printf("[%s]: Command not Found\n", args[0]);
     }
   }
   }
