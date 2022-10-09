@@ -10,6 +10,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include "get_path.h"
+#include <wordexp.h>
 
 int pid;
 int sh( int argc, char **argv, char **envp);

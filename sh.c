@@ -75,8 +75,6 @@ int sh( int argc, char **argv, char **envp )
       printf("Executing built-in [exit]\n");
       go = 0; 
 
-      //free(args);
-      //freeArgs();
       free(owd);
       free(pwd);
     }else if(strcmp(args[0], "pwd") == 0){
@@ -216,12 +214,12 @@ int sh( int argc, char **argv, char **envp )
       //HOME: cd with no arguments should now go to the new home
 
       if(argsct == 1){
-        printf("Executing built-in [printenv]\n");
+        printf("Executing built-in [setenv]\n");
         while(*s){
           printf("%s\n", *s++);
         }
       }else if(argsct == 2){
-        printf("Executing built-in [printenv]\n");
+        printf("Executing built-in [setenv]\n");
         setenv(args[1], "/", 1);
         if(strcmp(args[1], "HOME") == 0){
           homedir = getenv("HOME");
@@ -231,7 +229,7 @@ int sh( int argc, char **argv, char **envp )
           pathlist = get_path();
         }
       }else if(argsct == 3){
-        printf("Executing built-in [printenv]\n");
+        printf("Executing built-in [setenv]\n");
         setenv(args[1], args[2], 1);
 
         if(strcmp(args[1], "HOME") == 0){
