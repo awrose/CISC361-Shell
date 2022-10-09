@@ -2,15 +2,20 @@
 
 #define BUFFERSIZE 128
 
+//TODO: clean code 
+//TODO: SIGNAL STUFF 
+//TODO: MAKE SURE everything works
+//TODO: Free all allocated memory 
+
 extern char **environ;
 
 int sh( int argc, char **argv, char **envp )
 {
   char *prompt = calloc(PROMPTMAX, sizeof(char));
   char *commandline = calloc(MAX_CANON, sizeof(char));
-  char *command, *arg, *token, *commandpath, *p, *pwd, *owd;
+  char *token, *pwd, *owd;
   char **args;
-  int uid, i, status, argsct, go = 1;
+  int uid, argsct, go = 1;
   struct passwd *password_entry;
   char *homedir;
   struct pathelement *pathlist;
@@ -71,88 +76,111 @@ int sh( int argc, char **argv, char **envp )
   argsct = count;
 
   //if(argsct > 0){
+    /*EXIT: will exit the program when "exit" is typed, regardless of the input after "exit"
+    frees all dynamically allocated variables*/
     if(strcmp(args[0], "exit") == 0){
       printf("Executing built-in [exit]\n");
       go = 0; 
 
+      if(prompt){
+        free(prompt);
+      }
+      free(commandline);
+      free(args);
       free(owd);
       free(pwd);
+      /*PWD: prints the current working directory, will ignore any arguments typed after*/
     }else if(strcmp(args[0], "pwd") == 0){
       printf("Executing built-in [pwd]\n");
       printf("[%s]\n", pwd);
 
-      //free(args);
-
+      free(args);
+      /*PID: prints the process's PID, will ignore arguments typed after "pid"*/
     }else if(strcmp(args[0], "pid") == 0){
       printf("Executing built-in [pid]\n");
       printf("%d\n", getpid());
 
-      //free(args);
-
+      free(args);
+      /*WHERE: Will locate a program file in the user's path everywhere that it appears
+      if ran with no arguments --> won't do anything, ran any commands, will find the entire 
+      lists' commands and will be printed under the [cmd]:*/
     }else if(strcmp(args[0], "where") == 0){
       if(argsct == 1){
         printf("Too little args\n");
       }else if(argsct == 2){
-        printf("Executing built-in [where]\n");
         where(args[1], pathlist);
       }else{
-        printf("too many arguments\n");
+        for(int i = 1; i<argsct; i++){
+          printf("%s:\n", args[i]);
+          where(args[i], pathlist);
+        }
       }
 
-      //free(args);
+      free(args);
 
+      /*WHICH: will locate a program file specified in the user's path 
+      if no arguments: will not do anything, with arguments: will find the path for 
+      each argument, if more than one arg: will print the [cmd]: before the paths*/
     }else if(strcmp(args[0], "which") == 0){
       if(argsct == 1){
         printf("Too little args\n");
       }else if(argsct == 2){
-        printf("Executing built-in [which]\n");
         which(args[1], pathlist);
       }else{
-        printf("too many arguments\n");
+        for(int i = 1; i<argsct; i++){
+          printf("%s:\n", args[i]);
+          which(args[i], pathlist);
+        }
       }
 
-      //free(args);
-
+      free(args);
+      /*CD: will change the working directory
+      no args: change the directory to the HOME directory
+      '-': change the directory to the previous directory
+      any other: will attempt to change to that directory if it exists */
     }else if(strcmp(args[0], "cd") == 0){
       if(argsct == 1){
-        printf("Executing built-in [cd]\n");
-        chdir(homedir);
+        if(chdir(homedir) != 0){
+          perror("chdir");
+        }else{
+          printf("Executing built-in [cd]\n");
+        }
 
           if ( (pwd = getcwd(NULL, PATH_MAX+1)) == NULL )
           {
             perror("getcwd");
             exit(2);
           }
-            owd = calloc(strlen(pwd) + 1, sizeof(char));
-            memcpy(owd, pwd, strlen(pwd));
       }else if(args[1][0] == '-'){
-        printf("Executing built-in [cd]\n");
-
-        chdir("..");
+        if(chdir("..") != 0){
+          perror("chdir");
+        }else{
+          printf("Executing built-in [cd]\n");
+        }
 
           if ( (pwd = getcwd(NULL, PATH_MAX+1)) == NULL )
           {
             perror("getcwd");
             exit(2);
           }
-
-            owd = calloc(strlen(pwd) + 1, sizeof(char));
-            memcpy(owd, pwd, strlen(pwd));
       }else{
-        printf("Executing built-in [cd]\n");
-        chdir(args[1]);
+        if(chdir(args[1]) != 0){
+          perror("chdir");
+        }else{
+          printf("Executing built-in [cd]\n");
+        }
             if ( (pwd = getcwd(NULL, PATH_MAX+1)) == NULL )
           {
             perror("getcwd");
             exit(2);
           }
-
-            owd = calloc(strlen(pwd) + 1, sizeof(char));
-            memcpy(owd, pwd, strlen(pwd));
       }
 
+      free(args);
+      /*LIST:
+      no args: list the files in the cwd one per line
+      args: list the files in each directory followed by [name of the directory]: */
     }else if(strcmp(args[0], "list") == 0){
-      printf("Executing built-in [list]\n");
       if(argsct == 1){
         list(owd);
       }else{
@@ -161,7 +189,10 @@ int sh( int argc, char **argv, char **envp )
           list(args[i]);
         }
       }
-
+      /*KILL: kills a process
+      args: 
+      - Just a pid --> send kill that process 
+      - pid + signal --> send SIGTERM to that process with the signal*/
     }else if(strcmp(args[0], "kill") == 0){
       printf("Executing built-in [kill]\n");
       if(argsct == 2){
@@ -175,7 +206,12 @@ int sh( int argc, char **argv, char **envp )
         kill(killpid, signal);
       }
 
-
+      /*PROMPT changes the prompt in the shell (the prefix)
+      no args: will prompt user to enter a prompt
+      --> after entering the string, it will add it to the beginning of the prompt 
+      with arg: will set the prefix of the prompt to the argument
+      User can't input a sentence (anything with spaces) for the prompt
+      */
     }else if(strcmp(args[0], "prompt") == 0){
       printf("Executing built-in [prompt]\n");
       if(argsct == 1){
@@ -188,7 +224,10 @@ int sh( int argc, char **argv, char **envp )
       }else{ 
         prompt = args[1];
       }
-
+      /*PRINTENV: Prints the environment 
+      No args: print whole environment
+      One argument: call getEnv() on that environment 
+      two + arguments: error message */
     }else if(strcmp(args[0], "printenv") == 0){
       char **s = environ;
 
@@ -206,12 +245,15 @@ int sh( int argc, char **argv, char **envp )
 
       }
 
-
+      /*SETENV: 
+      no args: print the entire environment 
+      one arg: set that arg as an empty environment variable
+      two args: second arg is the value of the first
+      more args: error 
+      PATH --> update linked list for the path directories 
+      HOME --> cd should now go to the new HOME directory*/
     }else if(strcmp(args[0], "setenv") == 0){
       char **s = environ; 
-
-      //PATH: update linked list for the path directories (free() the old one)
-      //HOME: cd with no arguments should now go to the new home
 
       if(argsct == 1){
         printf("Executing built-in [setenv]\n");
@@ -243,12 +285,12 @@ int sh( int argc, char **argv, char **envp )
         printf("Error: too many args\n");
       }
 
-      //freeargs
 
+      /*WILDCARD */
     }else if(strchr(commandline, "*")!=NULL || strchr(commandline, '?') != NULL){
       wordexp_t p;
       char **w;
-      int pos; 
+      //int pos; 
 
       wordexp(commandline, &p, 0);
       w = p.we_wordv; 
@@ -259,7 +301,7 @@ int sh( int argc, char **argv, char **envp )
       wordfree(&p);
       exit(EXIT_SUCCESS);
 
-
+    /*IF ABSOLUTE PATH, test if the */
     }else if(access(args[0], X_OK) == 0){
       pid_t pid1 = fork();
       if(pid1 == 0){
@@ -268,7 +310,9 @@ int sh( int argc, char **argv, char **envp )
       }else{
         waitpid(pid1, NULL, 0);
       }
+      /*NOT ABSOLUTE PATH: search for command, run the executable*/
     }else{
+      int flag1 = 1;
       char *absPath = malloc(200 *sizeof(char));
       while(pathlist){
 
@@ -277,6 +321,7 @@ int sh( int argc, char **argv, char **envp )
           pid_t pid2 = fork();
 
           if(pid2 == 0){
+            flag1 = 0;
             printf("Executing [%s]\n", args[0]);
             execve(absPath, args, environ);
           }else{
@@ -285,37 +330,80 @@ int sh( int argc, char **argv, char **envp )
         }
                 pathlist = pathlist->next;
       }
+
+      if(flag1){
+        printf("%s: command not found\n", commandline);
+      }
       }
   }
 
   return 0;
-} /* sh() */
+}
 
+
+/*WHICH: 
+Args: command, pathlist
+Creates a new variable: find, store the current pathlist + command in find
+IF access returns 0, it is in the pathlist, print the path
+break once the first path is found
+*/
 void which(char *command, struct pathelement *pathlist )
 {
-   struct pathelement *tmp = pathlist;
+  char *find = malloc(200*sizeof(char));
+  int flag = 1;
 
-   while(tmp){
-    if(strstr(tmp->element, command)){
-      printf("%s\n", tmp->element);
-      break; 
+  while(pathlist != NULL){
+    sprintf(find, "%s/%s", pathlist->element, command);
+    if(access(find, X_OK) == 0){
+      printf("Executing built-in [which]\n");
+      flag = 0;
+      printf("%s/%s\n", pathlist->element, command);
+
+      break;
     }
-    tmp = tmp->next;
-   }
+
+    pathlist = pathlist->next; 
+  }
+
+  if(flag){
+    perror("access");
+  }
+
+  free(find);
 
 }
 
+/*WHERE: 
+Args: command, pathlist
+Creates a new variable: find, store the current pathlist + command in find
+IF access returns 0, it is in the pathlist, print the path
+will print every path that the command is found in
+*/
 void where(char *command, struct pathelement *pathlist )
 {
+  char *find = malloc(200 *sizeof(char));
+  int flag = 1; 
+
   while(pathlist){
-    if(strstr(pathlist->element, command)){
-      printf("%s\n", pathlist->element);
+    sprintf(find, "%s/%s", pathlist->element, command);
+    if(access(find, X_OK) == 0){
+      printf("Executing built-in [where]\n");
+      flag = 0;
+      printf("%s/%s\n", pathlist->element, command);
     }
-    pathlist = pathlist->next;
+
+    pathlist = pathlist->next; 
   }
+
+  if(flag){
+    perror("access");
+  }
+
+  free(find);
 }
 
-
+/*LIST: takes in a directory, and prints all of the files in that directory one by one on a line 
+if the directory doesn't exist, it will display an error message*/
 void list ( char *currDir )
 {
   DIR* dir = opendir(currDir);
