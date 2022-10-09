@@ -70,7 +70,7 @@ int sh( int argc, char **argv, char **envp )
   }
   argsct = count;
 
-  if(argsct > 0){
+  //if(argsct > 0){
     if(strcmp(args[0], "exit") == 0){
       printf("Executing built-in [exit]\n");
       go = 0; 
@@ -245,6 +245,21 @@ int sh( int argc, char **argv, char **envp )
 
       //freeargs
 
+    }else if(strchr(commandline, "*")!=NULL || strchr(commandline, '?') != NULL){
+      wordexp_t p;
+      char **w;
+      int pos; 
+
+      wordexp(commandline, &p, 0);
+      w = p.we_wordv; 
+
+      for(int i = 0; i<p.we_wordc; i++){
+        printf("%s\n", w[i]);
+      }
+      wordfree(&p);
+      exit(EXIT_SUCCESS);
+
+
     }else if(access(args[0], X_OK) == 0){
       pid_t pid1 = fork();
       if(pid1 == 0){
@@ -254,31 +269,25 @@ int sh( int argc, char **argv, char **envp )
         waitpid(pid1, NULL, 0);
       }
     }else{
+      char *absPath = malloc(200 *sizeof(char));
       while(pathlist){
-        if(strstr(pathlist->element, args[0])){
-          char *newPathlist = strtok(pathlist, "/");
 
-          while(newPathlist){
-            if(access(newPathlist, X_OK) == 0){
-              pid_t pid2 = fork();
-              if(pid2 == 0){
-                printf("Executing [%s]\n", newPathlist);
-                execve(newPathlist, args, environ);
-              }else{
-                waitpid(pid2, NULL, 0);
-              }
-              break;
-            }
-            newPathlist = strtok(NULL, "/");
+        sprintf(absPath, "%s/%s", pathlist->element, args[0]);
+        if(access(absPath, X_OK) == 0){
+          pid_t pid2 = fork();
+
+          if(pid2 == 0){
+            printf("Executing [%s]\n", args[0]);
+            execve(absPath, args, environ);
+          }else{
+            waitpid(pid2, NULL, 0);
           }
         }
-        pathlist = pathlist->next;
+                pathlist = pathlist->next;
       }
+      }
+  }
 
-      printf("[%s]: Command not Found\n", args[0]);
-    }
-  }
-  }
   return 0;
 } /* sh() */
 
