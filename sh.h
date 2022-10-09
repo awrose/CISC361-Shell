@@ -18,6 +18,7 @@ void which(char *command, struct pathelement *pathlist );
 void where(char *command, struct pathelement *pathlist );
 void list ( char *dir );
 void printenv(char **envp);
+void freePathlist(struct pathelement *pathlist);
 
 
 #define PROMPTMAX 32

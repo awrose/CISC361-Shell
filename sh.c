@@ -75,65 +75,89 @@ int sh( int argc, char **argv, char **envp )
   }
   argsct = count;
 
-  //if(argsct > 0){
+  if(argsct > 0){
     /*EXIT: will exit the program when "exit" is typed, regardless of the input after "exit"
     frees all dynamically allocated variables*/
     if(strcmp(args[0], "exit") == 0){
       printf("Executing built-in [exit]\n");
       go = 0; 
 
-      if(prompt){
-        free(prompt);
+      for(int i = 0; i<argsct; i++){
+        free(args[i]);
       }
-      free(commandline);
+
       free(args);
-      free(owd);
-      free(pwd);
+
       /*PWD: prints the current working directory, will ignore any arguments typed after*/
     }else if(strcmp(args[0], "pwd") == 0){
       printf("Executing built-in [pwd]\n");
       printf("[%s]\n", pwd);
 
+      for(int i = 0; i<argsct; i++){
+        free(args[i]);
+      }
+
       free(args);
+      //free(args);
       /*PID: prints the process's PID, will ignore arguments typed after "pid"*/
     }else if(strcmp(args[0], "pid") == 0){
       printf("Executing built-in [pid]\n");
       printf("%d\n", getpid());
 
+      for(int i = 0; i<argsct; i++){
+        free(args[i]);
+      }
+
       free(args);
+
+      //free(args);
       /*WHERE: Will locate a program file in the user's path everywhere that it appears
       if ran with no arguments --> won't do anything, ran any commands, will find the entire 
       lists' commands and will be printed under the [cmd]:*/
     }else if(strcmp(args[0], "where") == 0){
       if(argsct == 1){
-        printf("Too little args\n");
-      }else if(argsct == 2){
-        where(args[1], pathlist);
+        printf("where: too few arguments\n");
+
+        free(args[0]);
+        free(args);
       }else{
         for(int i = 1; i<argsct; i++){
           printf("%s:\n", args[i]);
           where(args[i], pathlist);
         }
+
+      for(int i = 0; i<argsct; i++){
+        free(args[i]);
       }
 
       free(args);
+      }
+
+      //free(args);
 
       /*WHICH: will locate a program file specified in the user's path 
       if no arguments: will not do anything, with arguments: will find the path for 
       each argument, if more than one arg: will print the [cmd]: before the paths*/
     }else if(strcmp(args[0], "which") == 0){
       if(argsct == 1){
-        printf("Too little args\n");
-      }else if(argsct == 2){
-        which(args[1], pathlist);
+        printf("which: too few arguments\n");
+
+        free(args[0]);
+        free(args);
       }else{
         for(int i = 1; i<argsct; i++){
           printf("%s:\n", args[i]);
           which(args[i], pathlist);
         }
+
+      for(int i = 0; i<argsct; i++){
+        free(args[i]);
       }
 
       free(args);
+      }
+
+      //free(args);
       /*CD: will change the working directory
       no args: change the directory to the HOME directory
       '-': change the directory to the previous directory
@@ -151,6 +175,10 @@ int sh( int argc, char **argv, char **envp )
             perror("getcwd");
             exit(2);
           }
+
+        free(args[0]);
+        free(args);
+
       }else if(args[1][0] == '-'){
         if(chdir("..") != 0){
           perror("chdir");
@@ -163,6 +191,12 @@ int sh( int argc, char **argv, char **envp )
             perror("getcwd");
             exit(2);
           }
+
+        for(int i = 0; i<argsct; i++){
+          free(args[i]);
+        }
+
+        free(args);
       }else{
         if(chdir(args[1]) != 0){
           perror("chdir");
@@ -174,36 +208,61 @@ int sh( int argc, char **argv, char **envp )
             perror("getcwd");
             exit(2);
           }
+
+        for(int i = 0; i<argsct; i++){
+          free(args[i]);
+        }
+
+        free(args);
       }
 
-      free(args);
+      //free(args);
       /*LIST:
       no args: list the files in the cwd one per line
       args: list the files in each directory followed by [name of the directory]: */
     }else if(strcmp(args[0], "list") == 0){
       if(argsct == 1){
         list(owd);
+
+        free(args[0]);
+        free(args);
       }else{
         for(int i = 1; i<argsct; i++){
           printf("\n%s:", args[i]);
           list(args[i]);
         }
+
+        for(int i = 0; i<argsct; i++){
+          free(args[i]);
+        }
+        free(args);
       }
       /*KILL: kills a process
       args: 
       - Just a pid --> send kill that process 
       - pid + signal --> send SIGTERM to that process with the signal*/
     }else if(strcmp(args[0], "kill") == 0){
-      printf("Executing built-in [kill]\n");
-      if(argsct == 2){
-        pid_t killpid = atoi(args[1]);
-        kill(killpid, SIGTERM);
+      if(argsct > 2){
+        printf("Executing built-in [kill]\n");
+        if(argsct == 2){
+          pid_t killpid = atoi(args[1]);
+          kill(killpid, SIGTERM);
 
-      }else if(argsct == 3){
-        pid_t killpid = atoi(args[2]);
-        int signal = -1 * atoi(args[1]);
+        }else if(argsct == 3){
+          pid_t killpid = atoi(args[2]);
+          int signal = -1 * atoi(args[1]);
 
-        kill(killpid, signal);
+          kill(killpid, signal);
+        }
+
+        for(int i = 0; i<argsct; i++){
+          free(args[i]);
+        }
+        free(args);
+
+      }else{
+        free(args[0]);
+        free(args);
       }
 
       /*PROMPT changes the prompt in the shell (the prefix)
@@ -221,9 +280,16 @@ int sh( int argc, char **argv, char **envp )
 		        buffer[len-1] = '\0';
 		        strcpy(prompt, buffer);
 	        }
+      }else if(argsct > 2){
+        printf("prompt: too many arguments\n");
       }else{ 
         prompt = args[1];
       }
+
+        for(int i = 0; i<argsct; i++){
+          free(args[i]);
+        }
+        free(args);
       /*PRINTENV: Prints the environment 
       No args: print whole environment
       One argument: call getEnv() on that environment 
@@ -241,9 +307,14 @@ int sh( int argc, char **argv, char **envp )
         printf("%s\n", getenv(args[1]));
       }else{
         //add right error message
-        printf("Error: too many args\n");
+        printf("printenv: too many args\n");
 
       }
+
+      for(int i = 0; i<argsct; i++){
+        free(args[i]);
+      }
+      free(args);
 
       /*SETENV: 
       no args: print the entire environment 
@@ -285,12 +356,18 @@ int sh( int argc, char **argv, char **envp )
         printf("Error: too many args\n");
       }
 
+      for(int i = 0; i<argsct; i++){
+        free(args[i]);
+      }
+      free(args);
 
-      /*WILDCARD */
-    }else if(strchr(commandline, "*")!=NULL || strchr(commandline, '?') != NULL){
+
+      /*WILDCARD: truly have no idea why this works, followed the example on wordexp(3)*/
+    }else if(strchr(commandline, '*')!=NULL || strchr(commandline, '?') != NULL){
       wordexp_t p;
       char **w;
       //int pos; 
+
 
       wordexp(commandline, &p, 0);
       w = p.we_wordv; 
@@ -299,17 +376,26 @@ int sh( int argc, char **argv, char **envp )
         printf("%s\n", w[i]);
       }
       wordfree(&p);
-      exit(EXIT_SUCCESS);
+
+      for(int i = 0; i<argsct; i++){
+        free(args[i]);
+      }
+      free(args);
 
     /*IF ABSOLUTE PATH, test if the */
-    }else if(access(args[0], X_OK) == 0){
+    }else if(access(commandline, X_OK) == 0){
       pid_t pid1 = fork();
       if(pid1 == 0){
-        printf("Executing [%s]\n", args[0]);
-        execve(args[0], args, environ);
+        printf("Executing [%s]\n", commandline);
+        execve(commandline, args, environ);
       }else{
         waitpid(pid1, NULL, 0);
       }
+
+      for(int i = 0; i<argsct; i++){
+        free(args[i]);
+      }
+      free(args);
       /*NOT ABSOLUTE PATH: search for command, run the executable*/
     }else{
       int flag1 = 1;
@@ -322,7 +408,7 @@ int sh( int argc, char **argv, char **envp )
 
           if(pid2 == 0){
             flag1 = 0;
-            printf("Executing [%s]\n", args[0]);
+            printf("Executing [%s]\n", commandline);
             execve(absPath, args, environ);
           }else{
             waitpid(pid2, NULL, 0);
@@ -334,8 +420,21 @@ int sh( int argc, char **argv, char **envp )
       if(flag1){
         printf("%s: command not found\n", commandline);
       }
+
+      for(int i = 0; i<argsct; i++){
+        free(args[i]);
       }
+      free(args);
+      }
+  }else{
+    free(args);
   }
+  }
+
+  //free(pathlist->element);
+  freePathlist(pathlist);
+  free(commandline);
+  free(prompt);
 
   return 0;
 }
@@ -416,4 +515,16 @@ void list ( char *currDir )
     printf("%s\n", dr->d_name);
   }
   closedir(dir);
+}
+
+void freePathlist(struct pathelement *pathlist){
+  struct pathelement *tmp; 
+
+  while(pathlist){
+    tmp = pathlist;
+    pathlist = pathlist->next;
+    free(tmp);
+  }
+
+  free(pathlist);
 }
