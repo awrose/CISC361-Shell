@@ -405,7 +405,7 @@ int sh( int argc, char **argv, char **envp )
       struct pathelement *tmp = pathlist;
       while(tmp){
 
-        sprintf(absPath, "%s/%s", tmp->element, args[0]);
+        //sprintf(absPath, "%s/%s", tmp->element, args[0]);
         if(access(absPath, X_OK) == 0){
           flag1 = 0;
           pid_t pid2 = fork();
