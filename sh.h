@@ -14,7 +14,7 @@
 
 //int pid;
 int sh( int argc, char **argv, char **envp);
-void which(char *command, struct pathelement *pathlist );
+int which(char *command, struct pathelement *pathlist );
 void where(char *command, struct pathelement *pathlist );
 void list ( char *dir );
 void printenv(char **envp);

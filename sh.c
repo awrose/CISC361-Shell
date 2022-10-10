@@ -404,21 +404,24 @@ int sh( int argc, char **argv, char **envp )
       char *absPath = malloc(200 *sizeof(char));
       struct pathelement *tmp = pathlist;
       while(tmp){
+        if(which(commandline, pathlist) == 0){
 
-        sprintf(absPath, "%s/%s", tmp->element, args[0]);
-        if(access(absPath, X_OK) == 0){
+        sprintf(absPath, "%s/%s", tmp->element, commandline);
+        if(access(commandline, X_OK) == 0){
           flag1 = 0;
           pid_t pid2 = fork();
 
           if(pid2 == 0){
             printf("Executing [%s]\n", commandline);
-            execve(absPath, args, environ);
-            break;
+            execve(tmp->element, args, environ);
           }else{
             waitpid(pid2, NULL, 0);
           }
+
+          break;
         }
                 tmp = tmp->next;
+      }
       }
 
       if(flag1){
@@ -450,7 +453,7 @@ Creates a new variable: find, store the current pathlist + command in find
 IF access returns 0, it is in the pathlist, print the path
 break once the first path is found
 */
-void which(char *command, struct pathelement *pathlist )
+int which(char *command, struct pathelement *pathlist )
 {
   char *find = malloc(200*sizeof(char));
   int flag = 1;
@@ -472,6 +475,8 @@ void which(char *command, struct pathelement *pathlist )
   }
 
   free(find);
+
+  return flag;
 
 }
 
