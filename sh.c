@@ -121,6 +121,7 @@ int sh( int argc, char **argv, char **envp )
         free(args[0]);
         free(args);
       }else{
+        printf("Executing built-in [where]\n");
         for(int i = 1; i<argsct; i++){
           printf("%s:\n", args[i]);
           where(args[i], pathlist);
@@ -145,6 +146,7 @@ int sh( int argc, char **argv, char **envp )
         free(args[0]);
         free(args);
       }else{
+        printf("Executing built-in [which]\n");
         for(int i = 1; i<argsct; i++){
           printf("%s:\n", args[i]);
           which(args[i], pathlist);
@@ -405,12 +407,13 @@ int sh( int argc, char **argv, char **envp )
 
         sprintf(absPath, "%s/%s", tmp->element, args[0]);
         if(access(absPath, X_OK) == 0){
+          flag1 = 0;
           pid_t pid2 = fork();
 
           if(pid2 == 0){
-            flag1 = 0;
             printf("Executing [%s]\n", commandline);
             execve(absPath, args, environ);
+            break;
           }else{
             waitpid(pid2, NULL, 0);
           }
@@ -455,7 +458,6 @@ void which(char *command, struct pathelement *pathlist )
   while(pathlist != NULL){
     sprintf(find, "%s/%s", pathlist->element, command);
     if(access(find, X_OK) == 0){
-      printf("Executing built-in [which]\n");
       flag = 0;
       printf("%s/%s\n", pathlist->element, command);
 
@@ -487,7 +489,6 @@ void where(char *command, struct pathelement *pathlist )
   while(pathlist){
     sprintf(find, "%s/%s", pathlist->element, command);
     if(access(find, X_OK) == 0){
-      printf("Executing built-in [where]\n");
       flag = 0;
       printf("%s/%s\n", pathlist->element, command);
     }
