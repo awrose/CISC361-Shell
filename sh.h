@@ -12,7 +12,7 @@
 #include "get_path.h"
 #include <wordexp.h>
 
-int pid;
+//int pid;
 int sh( int argc, char **argv, char **envp);
 void which(char *command, struct pathelement *pathlist );
 void where(char *command, struct pathelement *pathlist );
