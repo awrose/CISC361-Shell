@@ -400,9 +400,10 @@ int sh( int argc, char **argv, char **envp )
     }else{
       int flag1 = 1;
       char *absPath = malloc(200 *sizeof(char));
-      while(pathlist){
+      struct pathelement *tmp = pathlist;
+      while(tmp){
 
-        sprintf(absPath, "%s/%s", pathlist->element, args[0]);
+        sprintf(absPath, "%s/%s", tmp->element, args[0]);
         if(access(absPath, X_OK) == 0){
           pid_t pid2 = fork();
 
@@ -414,7 +415,7 @@ int sh( int argc, char **argv, char **envp )
             waitpid(pid2, NULL, 0);
           }
         }
-                pathlist = pathlist->next;
+                tmp = tmp->next;
       }
 
       if(flag1){
