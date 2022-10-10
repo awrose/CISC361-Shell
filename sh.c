@@ -404,16 +404,15 @@ int sh( int argc, char **argv, char **envp )
       char *absPath = malloc(200 *sizeof(char));
       struct pathelement *tmp = pathlist;
       while(tmp){
-        if(which(commandline, pathlist) == 0){
 
         sprintf(absPath, "%s/%s", tmp->element, commandline);
-        if(access(commandline, X_OK) == 0){
+        if(access(absPath, X_OK) == 0){
           flag1 = 0;
           pid_t pid2 = fork();
 
           if(pid2 == 0){
             printf("Executing [%s]\n", commandline);
-            execve(tmp->element, args, environ);
+            execve(absPath, args, environ);
           }else{
             waitpid(pid2, NULL, 0);
           }
@@ -421,7 +420,7 @@ int sh( int argc, char **argv, char **envp )
           break;
         }
                 tmp = tmp->next;
-      }
+    
       }
 
       if(flag1){
